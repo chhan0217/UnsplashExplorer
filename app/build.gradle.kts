@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.unsplashexplorer"
+    namespace = "com.bccard.photoexplorer"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.unsplashexplorer"
+        applicationId = "com.bccard.photoexplorer"
         minSdk = 30
         targetSdk = 36
         versionCode = 1

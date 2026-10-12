@@ -1,4 +1,4 @@
-package com.example.unsplashexplorer
+package com.bccard.photoexplorer
 
 import org.junit.Test
 

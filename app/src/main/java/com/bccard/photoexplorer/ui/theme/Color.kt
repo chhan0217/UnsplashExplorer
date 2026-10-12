@@ -1,4 +1,4 @@
-package com.example.unsplashexplorer.ui.theme
+package com.bccard.photoexplorer.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
