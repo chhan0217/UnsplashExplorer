@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">UnsplashExplorer</string>
+    <string name="main_title">Unsplash Explorer</string>
+    <string name="favorites">좋아요</string>
 </resources>
