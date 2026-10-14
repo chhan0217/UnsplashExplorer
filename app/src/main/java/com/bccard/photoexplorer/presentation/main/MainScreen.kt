@@ -42,6 +42,7 @@ import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.bccard.photoexplorer.R
 import com.bccard.photoexplorer.domain.model.Photo
@@ -54,7 +55,7 @@ import kotlinx.coroutines.flow.flowOf
 internal fun MainRoute(
     viewModel: MainViewModel = hiltViewModel(),
     onFavoriteClick: () -> Unit = {},
-    onPhotoClick: (String) -> Unit = {},
+    onPhotoClick: (String) -> Unit,
 ) {
     MainScreen(
         photos = viewModel.photos.collectAsLazyPagingItems(),
@@ -124,7 +125,7 @@ private fun PhotoList(
     ) {
         items(
             count = photos.itemCount,
-            key = { index -> photos[index]?.id ?: index },
+            key = photos.itemKey { photo -> photo.id },
         ) { index ->
             val photo = photos[index] ?: return@items
             Surface(
@@ -142,7 +143,10 @@ private fun PhotoList(
                         error = placeholder,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(4f / 3f),
+                            .aspectRatio(4f / 3f)
+                            .clickable {
+                                onPhotoClick(photo.id)
+                            },
                         contentScale = ContentScale.Crop,
                     )
                     Row(
@@ -158,10 +162,7 @@ private fun PhotoList(
                             error = placeholder,
                             modifier = Modifier
                                 .size(32.dp)
-                                .clip(CircleShape)
-                                .clickable {
-                                    onPhotoClick(photo.id)
-                                },
+                                .clip(CircleShape),
                             contentScale = ContentScale.Crop,
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -252,7 +253,7 @@ private fun MainPreview() {
         MainScreen(
             photos = photos,
             onFavoriteClick = {},
-            onPhotoClick = {}
+            onPhotoClick = {},
         )
     }
 }

@@ -10,6 +10,7 @@ import retrofit2.HttpException
 class MainPhotoPagingSource(
     private val apiService: UnsplashApiService,
 ) : PagingSource<Int, Photo>() {
+    private val loadedPhotoIds = mutableSetOf<String>()
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Photo> = try {
         val page = params.key ?: STARTING_PAGE
@@ -17,11 +18,15 @@ class MainPhotoPagingSource(
             page = page,
             perPage = params.loadSize,
         )
+        val uniquePhotos = response.filter { loadedPhotoIds.add(it.id) }
+
+        val prevKey = if (page == STARTING_PAGE) null else page - 1
+        val nextKey = if (response.isEmpty()) null else page + 1
 
         LoadResult.Page(
-            data = response.map { it.toDomain() },
-            prevKey = if (page == STARTING_PAGE) null else page - 1,
-            nextKey = if (response.size < params.loadSize) null else page + 1,
+            data = uniquePhotos.map { it.toDomain() },
+            prevKey = prevKey,
+            nextKey = nextKey,
         )
     } catch (exception: CancellationException) {
         throw exception
@@ -39,7 +44,7 @@ class MainPhotoPagingSource(
 
     private fun GetPhotosResponse.toDomain() = Photo(
         id = id,
-        description = null,
+        description = description ?: altDescription,
         imageUrl = urls.regular,
         photographerName = user.name,
         photographerProfileImageUrl = user.profileImage?.medium,

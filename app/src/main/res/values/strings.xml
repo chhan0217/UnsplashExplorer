@@ -1,5 +1,10 @@
 <resources>
     <string name="app_name">UnsplashExplorer</string>
     <string name="main_title">Unsplash Explorer</string>
+    <string name="detail_title">Photo Detail</string>
     <string name="favorites">좋아요</string>
+    <string name="back">뒤로 가기</string>
+    <string name="detail_no_description">사진 설명이 없습니다.</string>
+    <string name="detail_instagram_username">@%1$s</string>
+    <string name="detail_tags">태그</string>
 </resources>
