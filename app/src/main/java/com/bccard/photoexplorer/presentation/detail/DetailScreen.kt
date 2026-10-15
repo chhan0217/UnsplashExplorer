@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -45,8 +46,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.bccard.photoexplorer.R
 import com.bccard.photoexplorer.domain.model.PhotoDetail
-import com.bccard.photoexplorer.domain.model.PhotoExif
-import com.bccard.photoexplorer.domain.model.PhotoLocation
 import com.bccard.photoexplorer.domain.model.Photographer
 import com.bccard.photoexplorer.presentation.common.ErrorContent
 import com.bccard.photoexplorer.presentation.common.LoadingContent
@@ -81,6 +80,10 @@ private fun DetailScreen(
     onFavoriteClick: () -> Unit,
     onRetry: () -> Unit,
 ) {
+    val isFavorite = (uiState as? DetailUiState.Success)
+        ?.photoDetail
+        ?.isFavorite == true
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -92,16 +95,22 @@ private fun DetailScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.back),
+                            contentDescription = null,
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = onFavoriteClick) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_favorite),
-                            contentDescription = stringResource(R.string.favorites),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            painter = painterResource(
+                                if (isFavorite) {
+                                    R.drawable.ic_favorite_filled
+                                } else {
+                                    R.drawable.ic_favorite_border
+                                },
+                            ),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
                         )
                     }
                 },
@@ -161,7 +170,7 @@ private fun DetailContent(
     ) {
         AsyncImage(
             model = photoDetail.imageUrl,
-            contentDescription = photoDetail.description,
+            contentDescription = null,
             placeholder = placeholder,
             error = placeholder,
             modifier = Modifier
@@ -178,7 +187,7 @@ private fun DetailContent(
         ) {
             AsyncImage(
                 model = photoDetail.photographer.profileImageUrl,
-                contentDescription = photoDetail.photographer.name,
+                contentDescription = null,
                 placeholder = placeholder,
                 error = placeholder,
                 modifier = Modifier
@@ -199,7 +208,8 @@ private fun DetailContent(
                     ?.takeIf(String::isNotBlank)
                     ?.let { username ->
                         Text(
-                            text = stringResource(R.string.detail_instagram_username, username),
+                            text = stringResource(R.string.detail_instagram_username, username
+                            ),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -256,40 +266,26 @@ private fun DetailPreview() {
 }
 
 private val previewPhotoDetail = PhotoDetail(
-    id = "LBI7cgq3pbM",
+    id = "preview",
     description = "해 질 무렵 산과 호수가 어우러진 고요한 풍경",
     imageUrl = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     width = 6000,
     height = 4000,
-    color = "#6E7B83",
-    likes = 3_421,
-    views = 1_284_320,
-    downloads = 48_291,
+    color = null,
+    likes = 0,
+    views = 0,
+    downloads = 0,
     photographer = Photographer(
-        username = "alexmorgan",
-        name = "Alex Morgan",
-        instagramUsername = "alexmorgan.photo",
+        username = "preview",
+        name = "홍길동",
+        instagramUsername = "photo_explorer",
         profileImageUrl = "https://images.unsplash.com/profile-1500530855697-b586d89ba3ee",
     ),
-    exif = PhotoExif(
-        make = "SONY",
-        model = "ILCE-7M4",
-        name = "Sony Alpha 7 IV",
-        exposureTime = "1/250",
-        aperture = "2.8",
-        focalLength = "35.0",
-        iso = 100,
-    ),
-    location = PhotoLocation(
-        name = "Lake Louise, Alberta, Canada",
-        city = "Lake Louise",
-        country = "Canada",
-        latitude = 51.4254,
-        longitude = -116.1773,
-    ),
+    exif = null,
+    location = null,
     tags = listOf(
-        "nature",
-        "mountain",
-        "lake",
+        "자연",
+        "산",
+        "호수",
     ),
 )

@@ -9,11 +9,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.bccard.photoexplorer.presentation.detail.DetailRoute
+import com.bccard.photoexplorer.presentation.favorite.FavoriteRoute
 import com.bccard.photoexplorer.presentation.main.MainRoute
 
 private const val MAIN_ROUTE = "main"
 private const val PHOTO_ID_ARGUMENT = "photoId"
 private const val DETAIL_ROUTE = "detail/{$PHOTO_ID_ARGUMENT}"
+private const val FAVORITE_ROUTE = "favorite"
 
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
@@ -29,6 +31,9 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 onPhotoClick = { photoId ->
                     navController.navigate("detail/${Uri.encode(photoId)}")
                 },
+                onFavoriteClick = {
+                    navController.navigate(FAVORITE_ROUTE)
+                }
             )
         }
         composable(
@@ -45,6 +50,17 @@ fun AppNavHost(modifier: Modifier = Modifier) {
                 photoId = photoId,
                 onBackClick = navController::popBackStack,
                 onFavoriteClick = {},
+            )
+        }
+
+        composable(
+            route = FAVORITE_ROUTE,
+        ) {
+            FavoriteRoute(
+                onBackClick = navController::popBackStack,
+                onPhotoClick = { photoId ->
+                    navController.navigate("detail/${Uri.encode(photoId)}")
+                },
             )
         }
     }

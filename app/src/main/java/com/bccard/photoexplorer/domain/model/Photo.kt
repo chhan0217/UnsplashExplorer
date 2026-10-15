@@ -6,5 +6,6 @@ data class Photo(
     val imageUrl: String,
     val photographerName: String,
     val photographerProfileImageUrl: String? = null,
+    val localImagePath: String? = null,
     val isFavorite: Boolean = false,
 )

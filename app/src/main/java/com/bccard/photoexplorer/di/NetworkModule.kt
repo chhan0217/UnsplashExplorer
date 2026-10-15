@@ -12,7 +12,12 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ImageDownloadClient
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -48,6 +53,11 @@ object NetworkModule {
             .addInterceptor(loggingInterceptor)
             .build()
     }
+
+    @Provides
+    @Singleton
+    @ImageDownloadClient
+    fun provideImageDownloadClient(): OkHttpClient = OkHttpClient.Builder().build()
 
     @Provides
     @Singleton

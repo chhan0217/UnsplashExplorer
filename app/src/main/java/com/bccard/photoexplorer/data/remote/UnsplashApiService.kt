@@ -1,6 +1,7 @@
 package com.bccard.photoexplorer.data.remote
 
 import com.bccard.photoexplorer.data.remote.dto.GetPhotoDetailResponse
+import com.bccard.photoexplorer.data.remote.dto.GetPhotoDownloadResponse
 import com.bccard.photoexplorer.data.remote.dto.GetPhotosResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -18,4 +19,9 @@ interface UnsplashApiService {
     suspend fun getPhotoDetail(
         @Path("photoId") photoId: String,
     ): GetPhotoDetailResponse
+
+    @GET("photos/{id}/download")
+    suspend fun getPhotoDownload(
+        @Path("id") id: String,
+    ): GetPhotoDownloadResponse
 }

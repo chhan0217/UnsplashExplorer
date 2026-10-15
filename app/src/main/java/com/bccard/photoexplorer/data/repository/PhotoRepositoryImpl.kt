@@ -71,6 +71,11 @@ class PhotoRepositoryImpl @Inject constructor(
             )
         }
 
+    override suspend fun getPhotoDownloadUrl(photoId: String): String =
+        apiService.getPhotoDownload(photoId).url
+            ?.takeIf(String::isNotBlank)
+            ?: throw IllegalStateException("다운로드 URL이 없습니다.")
+
     private companion object {
         const val PAGE_SIZE = 20
     }

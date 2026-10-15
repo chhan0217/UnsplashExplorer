@@ -9,4 +9,6 @@ interface PhotoRepository {
     fun getPhotos(): Flow<PagingData<Photo>>
 
     suspend fun getPhotoDetail(photoId: String): PhotoDetail
+
+    suspend fun getPhotoDownloadUrl(photoId: String): String
 }

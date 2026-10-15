@@ -14,6 +14,7 @@ data class PhotoDetail(
     val exif: PhotoExif?,
     val location: PhotoLocation?,
     val tags: List<String>,
+    val isFavorite: Boolean = false,
 )
 
 data class Photographer(

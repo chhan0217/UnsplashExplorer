@@ -18,18 +18,25 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -38,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
@@ -54,13 +62,22 @@ import kotlinx.coroutines.flow.flowOf
 @Composable
 internal fun MainRoute(
     viewModel: MainViewModel = hiltViewModel(),
-    onFavoriteClick: () -> Unit = {},
+    onFavoriteClick: () -> Unit,
     onPhotoClick: (String) -> Unit,
 ) {
+    val savingPhotoIds by viewModel.savingPhotoIds.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+
     MainScreen(
         photos = viewModel.photos.collectAsLazyPagingItems(),
+        savingPhotoIds = savingPhotoIds,
+        errorMessage = errorMessage,
         onFavoriteClick = onFavoriteClick,
-        onPhotoClick = onPhotoClick
+        onPhotoClick = onPhotoClick,
+        onPhotoFavoriteClick = { photo ->
+            viewModel.onPhotoFavorite(photo)
+        },
+        onErrorShown = viewModel::onErrorShown,
     )
 }
 
@@ -68,11 +85,24 @@ internal fun MainRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun MainScreen(
     photos: LazyPagingItems<Photo>,
+    savingPhotoIds: Set<String>,
+    errorMessage: String?,
     onFavoriteClick: () -> Unit,
-    onPhotoFavoriteClick: (Photo) -> Unit = {},
+    onPhotoFavoriteClick: (Photo) -> Unit,
     onPhotoClick: (String) -> Unit,
+    onErrorShown: () -> Unit,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onErrorShown()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.main_title)) },
@@ -82,8 +112,9 @@ private fun MainScreen(
                 actions = {
                     IconButton(onClick = onFavoriteClick) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_favorite),
-                            contentDescription = stringResource(R.string.favorites),
+                            painter = painterResource(R.drawable.ic_favorite_border),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
                         )
                     }
                 },
@@ -102,7 +133,8 @@ private fun MainScreen(
 
                 is LoadState.NotLoading -> PhotoList(
                     photos = photos,
-                    onFavoriteClick = onPhotoFavoriteClick,
+                    savingPhotoIds = savingPhotoIds,
+                    onPhotoFavoriteClick = onPhotoFavoriteClick,
                     onPhotoClick = onPhotoClick,
                 )
             }
@@ -113,7 +145,8 @@ private fun MainScreen(
 @Composable
 private fun PhotoList(
     photos: LazyPagingItems<Photo>,
-    onFavoriteClick: (Photo) -> Unit,
+    savingPhotoIds: Set<String>,
+    onPhotoFavoriteClick: (Photo) -> Unit,
     onPhotoClick: (String) -> Unit,
 ) {
     LazyVerticalGrid(
@@ -138,7 +171,7 @@ private fun PhotoList(
                 ) {
                     AsyncImage(
                         model = photo.imageUrl,
-                        contentDescription = photo.description,
+                        contentDescription = null,
                         placeholder = placeholder,
                         error = placeholder,
                         modifier = Modifier
@@ -157,7 +190,7 @@ private fun PhotoList(
                     ) {
                         AsyncImage(
                             model = photo.photographerProfileImageUrl,
-                            contentDescription = photo.photographerName,
+                            contentDescription = null,
                             placeholder = placeholder,
                             error = placeholder,
                             modifier = Modifier
@@ -174,19 +207,26 @@ private fun PhotoList(
                             overflow = TextOverflow.Ellipsis,
                         )
                         IconButton(
-                            onClick = { onFavoriteClick(photo) },
+                            onClick = { onPhotoFavoriteClick(photo) },
                             modifier = Modifier.size(32.dp),
+                            enabled = photo.id !in savingPhotoIds,
                         ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_favorite),
-                                contentDescription = stringResource(R.string.favorites),
-                                modifier = Modifier.size(20.dp),
-                                tint = if (photo.isFavorite) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                            )
+                            if (photo.id in savingPhotoIds) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            } else {
+                                Icon(
+                                    painter = painterResource(
+                                        if (photo.isFavorite) {
+                                            R.drawable.ic_favorite_filled
+                                        } else {
+                                            R.drawable.ic_favorite_border
+                                        },
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Color.Unspecified,
+                                )
+                            }
                         }
                     }
                 }
@@ -252,8 +292,12 @@ private fun MainPreview() {
     UnsplashExplorerTheme {
         MainScreen(
             photos = photos,
+            savingPhotoIds = emptySet(),
+            errorMessage = null,
             onFavoriteClick = {},
             onPhotoClick = {},
+            onPhotoFavoriteClick = {},
+            onErrorShown = {},
         )
     }
 }
