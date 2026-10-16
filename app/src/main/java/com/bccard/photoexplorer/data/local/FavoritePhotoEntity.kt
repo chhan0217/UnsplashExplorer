@@ -1,5 +1,6 @@
 package com.bccard.photoexplorer.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -10,4 +11,6 @@ data class FavoritePhotoEntity(
     val imageUrl: String,
     val photographerName: String,
     val localImagePath: String?,
+    @ColumnInfo(defaultValue = "0")
+    val savedAt: Long,
 )

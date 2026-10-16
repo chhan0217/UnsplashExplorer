@@ -33,6 +33,7 @@ class FavoriteRepositoryImpl @Inject constructor(
         imageUrl = imageUrl,
         photographerName = photographerName,
         localImagePath = localImagePath,
+        savedAt = System.currentTimeMillis(),
     )
 
     private fun FavoritePhotoEntity.toDomain() = Photo(

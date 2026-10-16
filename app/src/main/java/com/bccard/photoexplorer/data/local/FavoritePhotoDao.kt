@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FavoritePhotoDao {
-    @Query("SELECT * FROM favorite_photos ORDER BY id DESC")
+    @Query("SELECT * FROM favorite_photos ORDER BY savedAt DESC, id DESC")
     fun observeAll(): Flow<List<FavoritePhotoEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
