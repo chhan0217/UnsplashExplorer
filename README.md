@@ -27,6 +27,16 @@ Unsplash의 사진 목록을 둘러보고 상세 정보를 확인하는 Android 
 | Image | Coil 3 |
 | Test | JUnit 4, MockK, Coroutines Test |
 
+## 실행 방법
+
+프로젝트 루트의 `local.properties`에 Unsplash Access Key를 추가합니다.
+
+```properties
+UNSPLASH_ACCESS_KEY=YOUR_ACCESS_KEY
+```
+
+Access Key는 [Unsplash Developers](https://unsplash.com/developers)에서 발급받을 수 있습니다.
+
 ## 구현 포인트
 
 ### 사진 목록과 좋아요 상태
