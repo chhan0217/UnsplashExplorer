@@ -18,10 +18,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,6 +32,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,10 +49,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.bccard.photoexplorer.R
+import com.bccard.photoexplorer.domain.error.AppError
 import com.bccard.photoexplorer.domain.model.PhotoDetail
 import com.bccard.photoexplorer.domain.model.Photographer
 import com.bccard.photoexplorer.presentation.common.ErrorContent
 import com.bccard.photoexplorer.presentation.common.LoadingContent
+import com.bccard.photoexplorer.presentation.common.messageResource
 import com.bccard.photoexplorer.ui.theme.UnsplashExplorerTheme
 
 @Composable
@@ -56,9 +62,9 @@ internal fun DetailRoute(
     viewModel: DetailViewModel = hiltViewModel(),
     photoId: String,
     onBackClick: () -> Unit,
-    onFavoriteClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     LaunchedEffect(photoId) {
         viewModel.loadPhotoDetail(photoId)
@@ -66,8 +72,10 @@ internal fun DetailRoute(
 
     DetailScreen(
         uiState = uiState,
+        error = error,
         onBackClick = onBackClick,
-        onFavoriteClick = onFavoriteClick,
+        onFavoriteClick = viewModel::onFavoriteClick,
+        onErrorShown = viewModel::onErrorShown,
         onRetry = { viewModel.loadPhotoDetail(photoId) },
     )
 }
@@ -76,15 +84,30 @@ internal fun DetailRoute(
 @Composable
 private fun DetailScreen(
     uiState: DetailUiState,
+    error: AppError?,
     onBackClick: () -> Unit,
     onFavoriteClick: () -> Unit,
+    onErrorShown: () -> Unit,
     onRetry: () -> Unit,
 ) {
-    val isFavorite = (uiState as? DetailUiState.Success)
-        ?.photoDetail
-        ?.isFavorite == true
+    val successState = uiState as? DetailUiState.Success
+    val isFavorite = successState?.photoDetail?.isFavorite == true
+    val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = if (error != null) {
+        stringResource(error.messageResource())
+    } else {
+        null
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onErrorShown()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.detail_title)) },
@@ -100,18 +123,25 @@ private fun DetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onFavoriteClick) {
-                        Icon(
-                            painter = painterResource(
-                                if (isFavorite) {
-                                    R.drawable.ic_favorite_filled
-                                } else {
-                                    R.drawable.ic_favorite_border
-                                },
-                            ),
-                            contentDescription = null,
-                            tint = Color.Unspecified,
-                        )
+                    IconButton(
+                        onClick = onFavoriteClick,
+                        enabled = successState != null && !successState.isFavoriteUpdating,
+                    ) {
+                        if (successState?.isFavoriteUpdating == true) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        } else {
+                            Icon(
+                                painter = painterResource(
+                                    if (isFavorite) {
+                                        R.drawable.ic_favorite_filled
+                                    } else {
+                                        R.drawable.ic_favorite_border
+                                    },
+                                ),
+                                contentDescription = null,
+                                tint = Color.Unspecified,
+                            )
+                        }
                     }
                 },
             )
@@ -137,7 +167,7 @@ private fun DetailScreen(
 
             is DetailUiState.Error -> {
                 ErrorContent(
-                    message = uiState.message,
+                    message = stringResource(uiState.error.messageResource()),
                     onRetry = onRetry,
                     modifier = Modifier
                         .fillMaxSize()
@@ -258,8 +288,10 @@ private fun DetailPreview() {
     UnsplashExplorerTheme {
         DetailScreen(
             uiState = DetailUiState.Success(photoDetail = previewPhotoDetail),
+            error = null,
             onBackClick = {},
             onFavoriteClick = {},
+            onErrorShown = {},
             onRetry = {},
         )
     }

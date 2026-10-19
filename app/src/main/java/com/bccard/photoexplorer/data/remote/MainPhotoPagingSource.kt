@@ -2,10 +2,10 @@ package com.bccard.photoexplorer.data.remote
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.bccard.photoexplorer.data.error.toNetworkAppException
 import com.bccard.photoexplorer.data.remote.dto.GetPhotosResponse
 import com.bccard.photoexplorer.domain.model.Photo
 import kotlinx.coroutines.CancellationException
-import retrofit2.HttpException
 
 class MainPhotoPagingSource(
     private val apiService: UnsplashApiService,
@@ -30,10 +30,8 @@ class MainPhotoPagingSource(
         )
     } catch (exception: CancellationException) {
         throw exception
-    } catch (exception: HttpException) {
-        LoadResult.Error(exception.toApiException())
     } catch (exception: Exception) {
-        LoadResult.Error(exception)
+        LoadResult.Error(exception.toNetworkAppException())
     }
 
     override fun getRefreshKey(state: PagingState<Int, Photo>): Int? {

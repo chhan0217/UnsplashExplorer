@@ -44,9 +44,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.bccard.photoexplorer.R
+import com.bccard.photoexplorer.domain.error.AppError
 import com.bccard.photoexplorer.domain.model.Photo
 import com.bccard.photoexplorer.presentation.common.ErrorContent
 import com.bccard.photoexplorer.presentation.common.LoadingContent
+import com.bccard.photoexplorer.presentation.common.messageResource
 import com.bccard.photoexplorer.ui.theme.UnsplashExplorerTheme
 import java.io.File
 
@@ -57,11 +59,11 @@ internal fun FavoriteRoute(
     onPhotoClick: (String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     FavoriteScreen(
         uiState = uiState,
-        errorMessage = errorMessage,
+        error = error,
         onBackClick = onBackClick,
         onPhotoClick = onPhotoClick,
         onPhotoFavoriteClick = viewModel::removeFavoritePhoto,
@@ -74,7 +76,7 @@ internal fun FavoriteRoute(
 @Composable
 private fun FavoriteScreen(
     uiState: FavoriteUiState,
-    errorMessage: String?,
+    error: AppError?,
     onBackClick: () -> Unit,
     onPhotoClick: (String) -> Unit,
     onPhotoFavoriteClick: (Photo) -> Unit,
@@ -82,6 +84,11 @@ private fun FavoriteScreen(
     onRetry: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = if (error != null) {
+        stringResource(error.messageResource())
+    } else {
+        null
+    }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let { message ->
@@ -140,7 +147,7 @@ private fun FavoriteScreen(
             }
 
             is FavoriteUiState.Error -> ErrorContent(
-                message = uiState.message,
+                message = stringResource(uiState.error.messageResource()),
                 onRetry = onRetry,
                 modifier = Modifier
                     .fillMaxSize()
@@ -262,7 +269,7 @@ private fun FavoritePreview() {
                     ),
                 ),
             ),
-            errorMessage = null,
+            error = null,
             onBackClick = {},
             onPhotoClick = {},
             onPhotoFavoriteClick = {},

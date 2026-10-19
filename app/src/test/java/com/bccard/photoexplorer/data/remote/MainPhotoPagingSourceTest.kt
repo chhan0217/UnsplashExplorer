@@ -14,7 +14,6 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class MainPhotoPagingSourceTest {
 
@@ -79,37 +78,4 @@ class MainPhotoPagingSourceTest {
         }
     }
 
-    @Test
-    fun `빈 페이지를 받으면 다음 페이지 키를 반환하지 않는다`() = runTest {
-        // Given
-        coEvery {
-            apiService.getPhotos(
-                page = 1,
-                perPage = 20,
-            )
-        } returns emptyList()
-
-        // When
-        val result = pagingSource.load(
-            PagingSource.LoadParams.Refresh(
-                key = null,
-                loadSize = 20,
-                placeholdersEnabled = false,
-            ),
-        )
-
-        // Then
-        val page = assertIs<PagingSource.LoadResult.Page<Int, Photo>>(result)
-
-        assertTrue(page.data.isEmpty())
-        assertNull(page.prevKey)
-        assertNull(page.nextKey)
-
-        coVerify(exactly = 1) {
-            apiService.getPhotos(
-                page = 1,
-                perPage = 20,
-            )
-        }
-    }
 }

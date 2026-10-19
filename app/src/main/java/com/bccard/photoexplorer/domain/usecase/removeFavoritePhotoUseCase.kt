@@ -10,10 +10,10 @@ class RemoveFavoritePhotoUseCase @Inject constructor(
     private val favoriteRepository: FavoriteRepository,
 ) {
     suspend operator fun invoke(photo: Photo) {
-        favoriteRepository.remove(photoId = photo.id)
-
         photo.localImagePath?.let { path ->
             photoFileRepository.delete(localImagePath = path)
         }
+
+        favoriteRepository.remove(photoId = photo.id)
     }
 }

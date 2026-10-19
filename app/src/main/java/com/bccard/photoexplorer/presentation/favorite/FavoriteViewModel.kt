@@ -2,6 +2,8 @@ package com.bccard.photoexplorer.presentation.favorite
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bccard.photoexplorer.domain.error.AppError
+import com.bccard.photoexplorer.domain.error.toAppError
 import com.bccard.photoexplorer.domain.model.Photo
 import com.bccard.photoexplorer.domain.usecase.ObserveFavoritePhotosUseCase
 import com.bccard.photoexplorer.domain.usecase.RemoveFavoritePhotoUseCase
@@ -22,8 +24,8 @@ class FavoriteViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<FavoriteUiState>(FavoriteUiState.Loading)
     val uiState: StateFlow<FavoriteUiState> = _uiState.asStateFlow()
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage = _errorMessage.asStateFlow()
+    private val _error = MutableStateFlow<AppError?>(null)
+    val error = _error.asStateFlow()
 
     private var observeFavoritesJob: Job? = null
 
@@ -42,7 +44,7 @@ class FavoriteViewModel @Inject constructor(
                 throw exception
             } catch (exception: Exception) {
                 _uiState.value = FavoriteUiState.Error(
-                    exception.message ?: "좋아요 목록을 불러오지 못했습니다.",
+                    error = exception.toAppError(),
                 )
             }
         }
@@ -60,12 +62,12 @@ class FavoriteViewModel @Inject constructor(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
-                _errorMessage.value = exception.message ?: "삭제에 실패했습니다."
+                _error.value = exception.toAppError()
             }
         }
     }
 
     fun onErrorShown() {
-        _errorMessage.value = null
+        _error.value = null
     }
 }

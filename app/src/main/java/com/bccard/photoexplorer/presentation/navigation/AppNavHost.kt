@@ -49,7 +49,6 @@ fun AppNavHost(modifier: Modifier = Modifier) {
             DetailRoute(
                 photoId = photoId,
                 onBackClick = navController::popBackStack,
-                onFavoriteClick = {},
             )
         }
 

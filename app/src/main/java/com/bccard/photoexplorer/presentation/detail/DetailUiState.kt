@@ -1,5 +1,6 @@
 package com.bccard.photoexplorer.presentation.detail
 
+import com.bccard.photoexplorer.domain.error.AppError
 import com.bccard.photoexplorer.domain.model.PhotoDetail
 
 sealed interface DetailUiState {
@@ -7,9 +8,10 @@ sealed interface DetailUiState {
 
     data class Success(
         val photoDetail: PhotoDetail,
+        val isFavoriteUpdating: Boolean = false,
     ) : DetailUiState
 
     data class Error(
-        val message: String,
+        val error: AppError,
     ) : DetailUiState
 }

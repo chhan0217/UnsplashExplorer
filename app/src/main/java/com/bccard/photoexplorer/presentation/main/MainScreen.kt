@@ -53,9 +53,12 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import com.bccard.photoexplorer.R
+import com.bccard.photoexplorer.domain.error.AppError
+import com.bccard.photoexplorer.domain.error.toAppError
 import com.bccard.photoexplorer.domain.model.Photo
 import com.bccard.photoexplorer.presentation.common.ErrorContent
 import com.bccard.photoexplorer.presentation.common.LoadingContent
+import com.bccard.photoexplorer.presentation.common.messageResource
 import com.bccard.photoexplorer.ui.theme.UnsplashExplorerTheme
 import kotlinx.coroutines.flow.flowOf
 
@@ -66,12 +69,12 @@ internal fun MainRoute(
     onPhotoClick: (String) -> Unit,
 ) {
     val savingPhotoIds by viewModel.savingPhotoIds.collectAsStateWithLifecycle()
-    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     MainScreen(
         photos = viewModel.photos.collectAsLazyPagingItems(),
         savingPhotoIds = savingPhotoIds,
-        errorMessage = errorMessage,
+        error = error,
         onFavoriteClick = onFavoriteClick,
         onPhotoClick = onPhotoClick,
         onPhotoFavoriteClick = { photo ->
@@ -86,13 +89,18 @@ internal fun MainRoute(
 private fun MainScreen(
     photos: LazyPagingItems<Photo>,
     savingPhotoIds: Set<String>,
-    errorMessage: String?,
+    error: AppError?,
     onFavoriteClick: () -> Unit,
     onPhotoFavoriteClick: (Photo) -> Unit,
     onPhotoClick: (String) -> Unit,
     onErrorShown: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = if (error != null) {
+        stringResource(error.messageResource())
+    } else {
+        null
+    }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let { message ->
@@ -127,7 +135,9 @@ private fun MainScreen(
             when (val refresh = photos.loadState.refresh) {
                 LoadState.Loading -> LoadingContent()
                 is LoadState.Error -> ErrorContent(
-                    message = refresh.error.message ?: "사진을 불러오지 못했습니다.",
+                    message = stringResource(
+                        refresh.error.toAppError().messageResource(),
+                    ),
                     onRetry = photos::retry,
                 )
 
@@ -240,7 +250,9 @@ private fun PhotoList(
 
             is LoadState.Error -> item(span = { GridItemSpan(maxLineSpan) }) {
                 ErrorContent(
-                    message = append.error.message ?: "사진을 더 불러오지 못했습니다.",
+                    message = stringResource(
+                        append.error.toAppError().messageResource(),
+                    ),
                     onRetry = photos::retry,
                 )
             }
@@ -293,7 +305,7 @@ private fun MainPreview() {
         MainScreen(
             photos = photos,
             savingPhotoIds = emptySet(),
-            errorMessage = null,
+            error = null,
             onFavoriteClick = {},
             onPhotoClick = {},
             onPhotoFavoriteClick = {},

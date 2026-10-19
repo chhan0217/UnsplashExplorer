@@ -1,5 +1,6 @@
 package com.bccard.photoexplorer.presentation.favorite
 
+import com.bccard.photoexplorer.domain.error.AppError
 import com.bccard.photoexplorer.domain.model.Photo
 
 sealed interface FavoriteUiState {
@@ -11,6 +12,6 @@ sealed interface FavoriteUiState {
     ) : FavoriteUiState
 
     data class Error(
-        val message: String,
+        val error: AppError,
     ) : FavoriteUiState
 }

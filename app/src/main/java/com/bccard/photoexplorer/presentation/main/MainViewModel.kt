@@ -4,14 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import androidx.paging.map
+import com.bccard.photoexplorer.domain.error.AppError
+import com.bccard.photoexplorer.domain.error.toAppError
 import com.bccard.photoexplorer.domain.model.Photo
-import com.bccard.photoexplorer.domain.repository.FavoriteRepository
 import com.bccard.photoexplorer.domain.usecase.AddFavoritePhotoUseCase
 import com.bccard.photoexplorer.domain.usecase.MainPhotosUseCase
+import com.bccard.photoexplorer.domain.usecase.ObserveFavoritePhotosUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -20,7 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     getPhotosUseCase: MainPhotosUseCase,
-    favoriteRepository: FavoriteRepository,
+    observeFavoritePhotosUseCase: ObserveFavoritePhotosUseCase,
     private val addFavoritePhoto: AddFavoritePhotoUseCase,
 ) : ViewModel() {
     private val cachedPhotos = getPhotosUseCase().cachedIn(viewModelScope)
@@ -28,12 +31,19 @@ class MainViewModel @Inject constructor(
     private val _savingPhotoIds = MutableStateFlow<Set<String>>(emptySet())
     val savingPhotoIds = _savingPhotoIds.asStateFlow()
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage = _errorMessage.asStateFlow()
+    private val _error = MutableStateFlow<AppError?>(null)
+    val error = _error.asStateFlow()
+
+    private val favoritePhotos = observeFavoritePhotosUseCase()
+        .catch { exception ->
+            if (exception is CancellationException) throw exception
+            _error.value = exception.toAppError()
+            emit(emptyList())
+        }
 
     val photos = combine(
         cachedPhotos,
-        favoriteRepository.observeFavorites(),
+        favoritePhotos,
     ) { pagingData, favorites ->
         val favoriteIds = favorites.mapTo(mutableSetOf(), Photo::id)
         pagingData.map { photo ->
@@ -51,7 +61,7 @@ class MainViewModel @Inject constructor(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
-                _errorMessage.value = exception.message ?: "좋아요 저장에 실패했습니다."
+                _error.value = exception.toAppError()
             } finally {
                 _savingPhotoIds.update { it - photo.id }
             }
@@ -59,6 +69,6 @@ class MainViewModel @Inject constructor(
     }
 
     fun onErrorShown() {
-        _errorMessage.value = null
+        _error.value = null
     }
 }
