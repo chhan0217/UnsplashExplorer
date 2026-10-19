@@ -37,7 +37,7 @@ class PhotoRepositoryImpl @Inject constructor(
             PhotoDetail(
                 id = response.id,
                 description = response.description ?: response.altDescription,
-                imageUrl = response.urls.regular,
+                imageUrl = response.urls.full ?: response.urls.regular,
                 width = response.width,
                 height = response.height,
                 color = response.color,

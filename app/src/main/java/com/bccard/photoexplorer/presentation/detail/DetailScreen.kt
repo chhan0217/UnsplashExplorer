@@ -192,6 +192,30 @@ private fun DetailContent(
     } else {
         4f / 3f
     }
+    val cameraInfo = photoDetail.exif?.let { exif ->
+        listOfNotNull(
+            exif.name ?: exif.model ?: exif.make,
+            exif.exposureTime?.let {
+                stringResource(R.string.detail_exposure_time, it)
+            },
+            exif.aperture?.let {
+                stringResource(R.string.detail_aperture, it)
+            },
+            exif.focalLength?.let {
+                stringResource(R.string.detail_focal_length, it)
+            },
+            exif.iso?.let {
+                stringResource(R.string.detail_iso, it)
+            },
+        ).joinToString(" · ").takeIf(String::isNotBlank)
+    }
+    val locationInfo = photoDetail.location?.let { location ->
+        location.name
+            ?.takeIf(String::isNotBlank)
+            ?: listOfNotNull(location.city, location.country)
+                .joinToString(", ")
+                .takeIf(String::isNotBlank)
+    }
 
     Column(
         modifier = modifier
@@ -238,7 +262,9 @@ private fun DetailContent(
                     ?.takeIf(String::isNotBlank)
                     ?.let { username ->
                         Text(
-                            text = stringResource(R.string.detail_instagram_username, username
+                            text = stringResource(
+                                R.string.detail_instagram_username,
+                                username,
                             ),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -254,7 +280,39 @@ private fun DetailContent(
             style = MaterialTheme.typography.bodyLarge,
         )
         Spacer(modifier = Modifier.height(20.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.detail_views, photoDetail.views),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.detail_downloads, photoDetail.downloads),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        cameraInfo?.let { info ->
+            Spacer(modifier = Modifier.height(20.dp))
+            DetailInfo(
+                title = stringResource(R.string.detail_camera),
+                value = info,
+            )
+        }
+        locationInfo?.let { location ->
+            Spacer(modifier = Modifier.height(20.dp))
+            DetailInfo(
+                title = stringResource(R.string.detail_location),
+                value = location,
+            )
+        }
         if (photoDetail.tags.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(20.dp))
             Text(
                 text = stringResource(R.string.detail_tags),
                 modifier = Modifier.padding(bottom = 10.dp),
@@ -280,6 +338,24 @@ private fun DetailContent(
 
         Spacer(modifier = Modifier.height(24.dp))
     }
+}
+
+@Composable
+private fun DetailInfo(
+    title: String,
+    value: String,
+) {
+    Text(
+        text = title,
+        modifier = Modifier.padding(bottom = 6.dp),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+    )
+    Text(
+        text = value,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)

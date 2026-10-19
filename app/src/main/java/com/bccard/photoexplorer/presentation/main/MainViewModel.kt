@@ -10,6 +10,7 @@ import com.bccard.photoexplorer.domain.model.Photo
 import com.bccard.photoexplorer.domain.usecase.AddFavoritePhotoUseCase
 import com.bccard.photoexplorer.domain.usecase.MainPhotosUseCase
 import com.bccard.photoexplorer.domain.usecase.ObserveFavoritePhotosUseCase
+import com.bccard.photoexplorer.domain.usecase.RemoveFavoritePhotoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,12 +25,13 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     getPhotosUseCase: MainPhotosUseCase,
     observeFavoritePhotosUseCase: ObserveFavoritePhotosUseCase,
-    private val addFavoritePhoto: AddFavoritePhotoUseCase,
+    private val addFavoritePhotoUseCase: AddFavoritePhotoUseCase,
+    private val removeFavoritePhotoUseCase: RemoveFavoritePhotoUseCase,
 ) : ViewModel() {
     private val cachedPhotos = getPhotosUseCase().cachedIn(viewModelScope)
 
-    private val _savingPhotoIds = MutableStateFlow<Set<String>>(emptySet())
-    val savingPhotoIds = _savingPhotoIds.asStateFlow()
+    private val _updatingPhotoIds = MutableStateFlow<Set<String>>(emptySet())
+    val updatingPhotoIds = _updatingPhotoIds.asStateFlow()
 
     private val _error = MutableStateFlow<AppError?>(null)
     val error = _error.asStateFlow()
@@ -45,25 +47,33 @@ class MainViewModel @Inject constructor(
         cachedPhotos,
         favoritePhotos,
     ) { pagingData, favorites ->
-        val favoriteIds = favorites.mapTo(mutableSetOf(), Photo::id)
+        val favoriteById = favorites.associateBy(Photo::id)
         pagingData.map { photo ->
-            photo.copy(isFavorite = photo.id in favoriteIds)
+            val favorite = favoriteById[photo.id]
+            photo.copy(
+                localImagePath = favorite?.localImagePath,
+                isFavorite = favorite != null,
+            )
         }
     }
 
     fun onPhotoFavorite(photo: Photo) {
-        if (photo.id in _savingPhotoIds.value || photo.isFavorite) return
+        if (photo.id in _updatingPhotoIds.value) return
 
         viewModelScope.launch {
-            _savingPhotoIds.update { it + photo.id }
+            _updatingPhotoIds.update { it + photo.id }
             try {
-                addFavoritePhoto(photo)
+                if (photo.isFavorite) {
+                    removeFavoritePhotoUseCase(photo)
+                } else {
+                    addFavoritePhotoUseCase(photo)
+                }
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
                 _error.value = exception.toAppError()
             } finally {
-                _savingPhotoIds.update { it - photo.id }
+                _updatingPhotoIds.update { it - photo.id }
             }
         }
     }

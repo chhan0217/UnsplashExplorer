@@ -6,6 +6,14 @@
     <string name="favorite_empty">저장한 사진이 없습니다.</string>
     <string name="detail_no_description">사진 설명이 없습니다.</string>
     <string name="detail_instagram_username">@%1$s</string>
+    <string name="detail_views">조회 %1$,d</string>
+    <string name="detail_downloads">다운로드 %1$,d</string>
+    <string name="detail_camera">촬영 정보</string>
+    <string name="detail_exposure_time">셔터 %1$s초</string>
+    <string name="detail_aperture">조리개 f/%1$s</string>
+    <string name="detail_focal_length">초점 거리 %1$smm</string>
+    <string name="detail_iso">ISO %1$d</string>
+    <string name="detail_location">촬영 위치</string>
     <string name="detail_tags">태그</string>
     <string name="error_invalid_request">잘못된 요청입니다.</string>
     <string name="error_network_unavailable">네트워크 연결을 확인해 주세요.</string>

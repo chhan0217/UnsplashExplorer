@@ -68,12 +68,12 @@ internal fun MainRoute(
     onFavoriteClick: () -> Unit,
     onPhotoClick: (String) -> Unit,
 ) {
-    val savingPhotoIds by viewModel.savingPhotoIds.collectAsStateWithLifecycle()
+    val updatingPhotoIds by viewModel.updatingPhotoIds.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
 
     MainScreen(
         photos = viewModel.photos.collectAsLazyPagingItems(),
-        savingPhotoIds = savingPhotoIds,
+        updatingPhotoIds = updatingPhotoIds,
         error = error,
         onFavoriteClick = onFavoriteClick,
         onPhotoClick = onPhotoClick,
@@ -88,7 +88,7 @@ internal fun MainRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun MainScreen(
     photos: LazyPagingItems<Photo>,
-    savingPhotoIds: Set<String>,
+    updatingPhotoIds: Set<String>,
     error: AppError?,
     onFavoriteClick: () -> Unit,
     onPhotoFavoriteClick: (Photo) -> Unit,
@@ -143,7 +143,7 @@ private fun MainScreen(
 
                 is LoadState.NotLoading -> PhotoList(
                     photos = photos,
-                    savingPhotoIds = savingPhotoIds,
+                    updatingPhotoIds = updatingPhotoIds,
                     onPhotoFavoriteClick = onPhotoFavoriteClick,
                     onPhotoClick = onPhotoClick,
                 )
@@ -155,7 +155,7 @@ private fun MainScreen(
 @Composable
 private fun PhotoList(
     photos: LazyPagingItems<Photo>,
-    savingPhotoIds: Set<String>,
+    updatingPhotoIds: Set<String>,
     onPhotoFavoriteClick: (Photo) -> Unit,
     onPhotoClick: (String) -> Unit,
 ) {
@@ -219,9 +219,9 @@ private fun PhotoList(
                         IconButton(
                             onClick = { onPhotoFavoriteClick(photo) },
                             modifier = Modifier.size(32.dp),
-                            enabled = photo.id !in savingPhotoIds,
+                            enabled = photo.id !in updatingPhotoIds,
                         ) {
-                            if (photo.id in savingPhotoIds) {
+                            if (photo.id in updatingPhotoIds) {
                                 CircularProgressIndicator(modifier = Modifier.size(20.dp))
                             } else {
                                 Icon(
@@ -304,7 +304,7 @@ private fun MainPreview() {
     UnsplashExplorerTheme {
         MainScreen(
             photos = photos,
-            savingPhotoIds = emptySet(),
+            updatingPhotoIds = emptySet(),
             error = null,
             onFavoriteClick = {},
             onPhotoClick = {},

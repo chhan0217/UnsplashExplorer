@@ -1,7 +1,10 @@
 package com.bccard.photoexplorer.data.repository
 
 import com.bccard.photoexplorer.data.remote.UnsplashApiService
+import com.bccard.photoexplorer.data.remote.dto.Exif
 import com.bccard.photoexplorer.data.remote.dto.GetPhotoDetailResponse
+import com.bccard.photoexplorer.data.remote.dto.PhotoLocation
+import com.bccard.photoexplorer.data.remote.dto.Position
 import com.bccard.photoexplorer.data.remote.dto.Tag
 import com.bccard.photoexplorer.data.remote.dto.UnsplashPhotoUrls
 import com.bccard.photoexplorer.data.remote.dto.UnsplashUser
@@ -35,6 +38,7 @@ class PhotoRepositoryImplTest {
             height = 800,
             urls = UnsplashPhotoUrls(
                 regular = "https://example.com/detail-photo.jpg",
+                full = "https://example.com/detail-photo-full.jpg",
             ),
             user = UnsplashUser(
                 username = "photographer-1",
@@ -42,6 +46,23 @@ class PhotoRepositoryImplTest {
             ),
             views = 1_000,
             downloads = 100,
+            exif = Exif(
+                make = "Canon",
+                model = "EOS R5",
+                exposureTime = "1/125",
+                aperture = "2.8",
+                focalLength = "50.0",
+                iso = 100,
+            ),
+            location = PhotoLocation(
+                name = "Seoul, South Korea",
+                city = "Seoul",
+                country = "South Korea",
+                position = Position(
+                    latitude = 37.5665,
+                    longitude = 126.978,
+                ),
+            ),
             tags = listOf(
                 Tag(type = "search", title = "자연"),
                 Tag(type = "search", title = "풍경"),
@@ -56,10 +77,16 @@ class PhotoRepositoryImplTest {
         // Then
         assertEquals(photoId, result.id)
         assertEquals("상세 사진 설명", result.description)
-        assertEquals("https://example.com/detail-photo.jpg", result.imageUrl)
+        assertEquals("https://example.com/detail-photo-full.jpg", result.imageUrl)
         assertEquals(1200, result.width)
         assertEquals(800, result.height)
         assertEquals("테스트 작가", result.photographer.name)
+        assertEquals(1_000, result.views)
+        assertEquals(100, result.downloads)
+        assertEquals("EOS R5", result.exif?.model)
+        assertEquals(100, result.exif?.iso)
+        assertEquals("Seoul", result.location?.city)
+        assertEquals(37.5665, result.location?.latitude)
         assertEquals(listOf("자연", "풍경"), result.tags)
 
         coVerify(exactly = 1) {
